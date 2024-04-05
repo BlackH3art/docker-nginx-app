@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16.1
+    container_name: db
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    # ports:
+    # - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    depends_on:
+      - backend
+      - frontend
+    build:
+      dockerfile: nginx.Dockerfile
+      context: .
+    ports:
+      - '80:80'
+
+  backend:
+    image: backend
+    container_name: backend
+    environment:
+      DATABASE_URL: 'postgresql://admin:password@db:5432/test'
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    depends_on:
+      - db
+    # ports:
+    # - '3000:3000'
+
+  frontend:
+    image: frontend
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    depends_on:
+      - backend
+    # ports:
+    # - '5173:5173'
